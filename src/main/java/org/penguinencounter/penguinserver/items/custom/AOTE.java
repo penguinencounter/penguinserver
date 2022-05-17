@@ -42,6 +42,9 @@ public class AOTE {
                     }
                     user.teleport(result.x, result.y, result.z);
                     user.playSound(SoundEvents.ENTITY_ENDERMAN_TELEPORT, SoundCategory.PLAYERS, 1.0f, 1.0f);
+
+                    // reset fall distance so they don't die immediately
+                    user.fallDistance = 0;
                 }
                 usedThisTick.add(user.getUuid());
                 return TypedActionResult.success(user.getStackInHand(hand));
