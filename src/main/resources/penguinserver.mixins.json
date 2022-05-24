@@ -6,9 +6,11 @@
     "mixins": [
         "ItemBindMixins$SVItemBinder",
         "ItemBindMixins$SVItemBinder2",
-        "ItemBindMixins$SVItemBinder3"
+        "ItemBindMixins$SVItemBinder3",
+        "S2CPacketIntercept"
     ],
     "client": [
+        "SkinLoaderIntercept"
     ],
     "injectors": {
         "defaultRequire": 1
