@@ -7,12 +7,10 @@ import com.mojang.authlib.properties.Property;
 import com.mojang.authlib.properties.PropertyMap;
 import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
 import net.fabricmc.loader.api.FabricLoader;
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.network.ClientConnection;
 import net.minecraft.network.PacketByteBuf;
-import net.minecraft.network.packet.s2c.play.EntitiesDestroyS2CPacket;
-import net.minecraft.network.packet.s2c.play.EntityPositionS2CPacket;
-import net.minecraft.network.packet.s2c.play.PlayerSpawnPositionS2CPacket;
-import net.minecraft.network.packet.s2c.play.PlayerSpawnS2CPacket;
+import net.minecraft.network.packet.s2c.play.*;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.util.math.Vec3d;
 import org.apache.commons.lang3.ArrayUtils;
@@ -86,6 +84,8 @@ public class FakePlayerUtil {
             cc.send(new PlayerSpawnS2CPacket(f.player));
             cc.send(new PlayerSpawnPositionS2CPacket(server.getOverworld().getSpawnPos(), 0));
             cc.send(new EntityPositionS2CPacket(moveEntityTo(f.player, f.pos, f.pitch, f.yaw)));
+            byte byaw = (byte) (f.yaw / 360 * 256);
+            cc.send(new EntitySetHeadYawS2CPacket(f.player, byaw));
             f.updateSkinLayersAll();
         }
     }

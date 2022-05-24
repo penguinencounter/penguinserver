@@ -69,6 +69,8 @@ public class FakePlayer {
         cc.send(new PlayerSpawnS2CPacket(this.player));
         cc.send(new PlayerSpawnPositionS2CPacket(server.getOverworld().getSpawnPos(), 0));
         cc.send(new EntityPositionS2CPacket(FakePlayerUtil.moveEntityTo(this.player, this.pos, this.pitch, this.yaw)));
+        byte byaw = (byte) (yaw / 360 * 256);
+        cc.send(new EntitySetHeadYawS2CPacket(this.player, byaw));
         syncedPlayers.add(spe.getUuid());
         updateSkinLayers(cc);
     }
