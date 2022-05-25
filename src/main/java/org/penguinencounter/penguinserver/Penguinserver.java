@@ -17,10 +17,12 @@ import net.minecraft.network.packet.c2s.play.PlayerInteractEntityC2SPacket;
 import net.minecraft.network.packet.s2c.play.*;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.command.CommandManager;
+import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.LiteralText;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.Vec3d;
+import org.penguinencounter.penguinserver.fpactions.LookAtNearbyPlayers;
 import org.penguinencounter.penguinserver.fplib.FakePlayer;
 import org.penguinencounter.penguinserver.fplib.FakePlayerUtil;
 import org.penguinencounter.penguinserver.fplib.ListFlasher;
@@ -56,8 +58,27 @@ public class Penguinserver implements ModInitializer {
         fpu = new FakePlayerUtil();
 
         // hooks + command registration
-        CommandRegistrationCallback.EVENT.register(((dispatcher, dedicated) -> dispatcher.register(SemiVanillaItem.registerCommand(CommandManager.literal("ci")))));
-        CommandRegistrationCallback.EVENT.register(((dispatcher, dedicated) -> dispatcher.register(
+        CommandRegistrationCallback.EVENT.register((dispatcher, dedicated) -> dispatcher.register(SemiVanillaItem.registerCommand(CommandManager.literal("ci"))));
+        CommandRegistrationCallback.EVENT.register((dispatcher, dedicated) -> dispatcher.register(
+            CommandManager.literal("captureskin").then(CommandManager.argument("target", UuidArgumentType.uuid()).executes(
+                ctx -> {
+                    UUID uuid = ctx.getArgument("target", UUID.class);
+                    ServerPlayerEntity player = ctx.getSource().getPlayer();
+                    player.sendMessage(new LiteralText("Capturing skin..."), false);
+                    FakePlayerUtil.captureSkin(uuid, () -> player.sendMessage(new LiteralText("Skin captured. Check the skin_data directory on the server."), false));
+                    return 1;
+                }
+            )).executes(     // no UUID, capture self
+                ctx -> {
+                    UUID uuid = ctx.getSource().getPlayer().getUuid();
+                    ServerPlayerEntity player = ctx.getSource().getPlayer();
+                    player.sendMessage(new LiteralText("Capturing skin for " + uuid + "..."), false);
+                    FakePlayerUtil.captureSkin(uuid, () -> player.sendMessage(new LiteralText("Skin captured. Check the skin_data directory on the server."), false));
+                    return 1;
+                }
+            )
+        ));
+        CommandRegistrationCallback.EVENT.register((dispatcher, dedicated) -> dispatcher.register(
             CommandManager.literal("fpu")
                 .then(CommandManager.literal("time").then(
                     CommandManager.argument("ticks", IntegerArgumentType.integer()).executes(
@@ -93,7 +114,7 @@ public class Penguinserver implements ModInitializer {
                         return 1;
                     }
                 ))
-        )));
+        ));
         ServerTickEvents.END_SERVER_TICK.register(SemiVanillaItem::tickAllActions);
         ServerTickEvents.START_SERVER_TICK.register(ListFlasher::tickAll);
         ServerTickEvents.START_SERVER_TICK.register(s -> fpu.autorun());
@@ -117,9 +138,11 @@ public class Penguinserver implements ModInitializer {
 
     private static void createFPs() {
         FakePlayer fp1 = fpu.join(UUID.randomUUID(), "", null, new Vec3d(0.5, 56.5, 16.5), 0, -90);
-        FakePlayerUtil.setSkinProfileFromFile(fp1.profile, "1b08145e-856d-4364-8bec-dbff32600609-0.txt");
+        FakePlayerUtil.setSkinProfileFromFile(fp1.profile, "penguinencounter-mage.json");
+        fp1.actions.add(new LookAtNearbyPlayers(fp1));
         FakePlayer fp2 = fpu.join(UUID.randomUUID(), "", null, new Vec3d(0.5, 56.5, 19.5), 0, -90);
-        FakePlayerUtil.setSkinProfileFromFile(fp2.profile, "1b08145e-856d-4364-8bec-dbff32600609-1.txt");
+        FakePlayerUtil.setSkinProfileFromFile(fp2.profile, "penguinencounter-elemental.json");
+        fp2.actions.add(new LookAtNearbyPlayers(fp2));
     }
 
     public static void pfl(Packet<?> packet, String boundTo) {

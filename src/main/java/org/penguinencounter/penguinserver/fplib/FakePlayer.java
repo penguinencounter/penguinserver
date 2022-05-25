@@ -14,6 +14,7 @@ import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.Text;
 import net.minecraft.util.math.Vec3d;
 import org.penguinencounter.penguinserver.Penguinserver;
+import org.penguinencounter.penguinserver.fpactions.FakePlayerAction;
 
 import javax.annotation.Nullable;
 import java.util.*;
@@ -38,6 +39,8 @@ public class FakePlayer {
 
     public GameProfile profile;
     public ServerPlayerEntity player;
+
+    public ArrayList<FakePlayerAction> actions = new ArrayList<>();
     public FakePlayer(UUID uuid, String name, @Nullable Set<UUID> targetPlayers, Vec3d at, float pitch, float yaw) {
         // save data
         this.uuid = uuid;
@@ -77,6 +80,8 @@ public class FakePlayer {
 
     public void updatePosition(ClientConnection cc) {
         cc.send(new EntityPositionS2CPacket(FakePlayerUtil.moveEntityTo(this.player, this.pos, this.pitch, this.yaw)));
+        byte byaw = (byte) (yaw / 360 * 256);
+        cc.send(new EntitySetHeadYawS2CPacket(this.player, byaw));
     }
 
     public void updatePositionAll() {
@@ -109,6 +114,12 @@ public class FakePlayer {
         sendSkinLayers = skinLayers.copy();
     }
 
+    public void runActions() {
+        for (FakePlayerAction action : actions) {
+            action.tick();
+        }
+    }
+
     public void tick() {
         limitSyncedToOnline();
         autoSync();
@@ -118,6 +129,7 @@ public class FakePlayer {
         if (!sendSkinLayers.equals(skinLayers)) {
             updateSkinLayersAll();
         }
+        runActions();
     }
 
     public void autoSync() {

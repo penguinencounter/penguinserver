@@ -14,6 +14,7 @@ import net.minecraft.network.packet.s2c.play.*;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.util.math.Vec3d;
 import org.apache.commons.lang3.ArrayUtils;
+import org.penguinencounter.penguinserver.fpactions.FakePlayerAction;
 
 import javax.annotation.Nullable;
 import java.io.File;
@@ -27,6 +28,7 @@ import java.nio.charset.CharsetEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Consumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -139,6 +141,7 @@ public class FakePlayerUtil {
 
     public static void setSkinProfile(GameProfile profile, UUID uuid, @Nullable Runnable then) {
         final String url = "https://sessionserver.mojang.com/session/minecraft/profile/" + uuid.toString() + "?unsigned=false";
+        LOGGER.info("Getting " + url);
         CompletableFuture.runAsync(() -> {
             try {
                 HttpURLConnection huc = (HttpURLConnection) new URL(url).openConnection();
@@ -146,6 +149,7 @@ public class FakePlayerUtil {
                 huc.setDoOutput(false);
                 huc.connect();
                 if (huc.getResponseCode() != 200) {
+                    LOGGER.error("Failed to get " + url + ", http " + huc.getResponseCode());
                     return;
                 }
                 byte[] result = huc.getInputStream().readAllBytes();  // blocking
@@ -163,6 +167,10 @@ public class FakePlayerUtil {
                 }
             } catch (Exception ignored) {}
         });
+    }
+
+    public static void captureSkin(UUID uuid, @Nullable Runnable then) {
+        setSkinProfile(new GameProfile(UUID.randomUUID(), ""), uuid, then);
     }
 
     public static void setSkinProfile(GameProfile profile, String textureData, String signature) {
